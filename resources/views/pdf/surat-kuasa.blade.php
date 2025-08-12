@@ -2,180 +2,298 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SURAT KUASA – F-1.07 (A4 Cetak)</title>
-  <style>
-    @page {
-      size: A4 portrait;
-      margin: 20mm;
-    }
-    html, body {
-      height: 100%;
-    }
-    body {
-      font-family: "Times New Roman", Times, serif;
-      color: #000;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-      margin: 0;
-      background: #fff;
-    }
-    .sheet {
-      width: 210mm;
-      min-height: 297mm;
-      box-sizing: border-box;
-      padding: 20mm;
-      margin: 0 auto;
-    }
-    @media screen {
-      body { background: #e5e5e5; }
-      .sheet {
-        background: #fff;
-        box-shadow: 0 0 0.8mm rgba(0,0,0,0.2);
-      }
-    }
-    h1.title {
-      font-size: 15pt;
-      text-align: center;
-      text-transform: uppercase;
-      margin: 2mm 0 6mm 0;
-      letter-spacing: 0.2px;
-    }
-    .kode {
-      font-weight: 600;
-      font-size: 11pt;
-      margin-bottom: 6mm;
-    }
-    p { margin: 0 0 3.2mm 0; line-height: 1.4; font-size: 12pt; }
-    .indent { text-indent: 10mm; }
-    .field {
-      display: inline-block;
-      border-bottom: 0.6pt dotted #000;
-      min-width: 70mm;
-      line-height: 1.2;
-      transform: translateY(-0.6mm);
-    }
-    .field.short { min-width: 30mm; }
-    .field.med { min-width: 50mm; }
-    .field.long { min-width: 120mm; }
-    .row { display: flex; gap: 2mm; }
-    .label { min-width: 60mm; }
-    .blok {
-      margin-top: 3.2mm;
-      margin-bottom: 3.2mm;
-    }
-    .ttd-area {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10mm;
-      margin-top: 20mm;
-    }
-    .ttd {
-      text-align: center;
-      min-height: 55mm;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-    }
-    .ttd .name-line {
-      margin-top: 25mm;
-    }
-    .paren-line {
-      display: inline-block;
-      padding: 0 8mm;
-      border-bottom: 0.6pt solid #000;
-      min-width: 60mm;
-    }
-    .footnote {
-      font-size: 10pt;
-      margin-top: 10mm;
-    }
-    .avoid-break { page-break-inside: avoid; }
+    <meta charset="utf-8">
+    <title>SURAT KUASA – F-1.07 (A4 Cetak)</title>
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 12mm 16mm;
+            /* dikurangi supaya tidak terlalu banyak space di atas */
+        }
 
-    /* Style untuk QR Code dan Barcode */
-    .qr-section {
-      position: absolute;
-      top: 10mm;
-      right: 20mm;
-      width: 30mm;
-      text-align: center;
-    }
-    .qr-code img {
-      max-width: 25mm;
-      height: auto;
-    }
-    .barcode {
-      margin-top: 5mm;
-      font-size: 8pt;
-    }
-    .barcode img {
-      max-width: 30mm;
-      height: 10mm;
-    }
-  </style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Courier New", Courier, monospace;
+            color: #000;
+            font-size: 12pt;
+            line-height: 1.35;
+        }
+
+        .sheet {
+            /* padding atas lebih kecil */
+            padding: 6mm 6mm 8mm 6mm;
+            box-sizing: border-box;
+            width: calc(210mm - 32mm);
+            margin: 0 auto;
+        }
+
+        .kode {
+            font-size: 10pt;
+            margin: 0 0 4mm 0;
+            /* sebelumnya 2mm, kita tambah jaraknya */
+        }
+
+        h1.title {
+            font-size: 14pt;
+            font-weight: bold;
+            text-align: center;
+            text-transform: uppercase;
+            margin: 10mm 0 4mm 0;
+            /* tambahkan margin atas 6mm supaya ada spasi dari .kode */
+        }
+
+        /* Paragraph pembuka - gunakan inline fields agar rapi */
+        p.lead {
+            margin: 0 0 4mm 0;
+            text-align: justify;
+        }
+
+        .field-inline {
+            display: inline-block;
+            vertical-align: middle;
+            border-bottom: 1px dotted #000;
+            padding: 0 4px;
+            margin: 0 6px;
+            min-height: 12px;
+            line-height: 1.2;
+        }
+
+        /* Tabel label / value untuk data agar rapi */
+        table.data {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 4mm;
+        }
+
+        table.data td {
+            vertical-align: top;
+            padding: 2px 0;
+        }
+
+        .label {
+            width: 56mm;
+            /* lebar tetap untuk label */
+            padding-right: 4mm;
+        }
+
+        .sep {
+            width: 6mm;
+        }
+
+        .value {
+            width: calc(100% - 62mm);
+        }
+
+        .field-block {
+            display: block;
+            border-bottom: 1px dotted #000;
+            padding: 2px 4px;
+            min-height: 12px;
+        }
+
+        /* Supaya teks nilai tampak uppercase & rapi */
+        .value .uppercase {
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        /* Area tanda tangan: tiga kolom (kiri, tengah QR, kanan) */
+        table.ttd-table {
+            width: 100%;
+            margin-top: 14mm;
+            border-collapse: collapse;
+        }
+
+        table.ttd-table td {
+            vertical-align: middle;
+            padding: 0;
+        }
+
+        .ttd-left,
+        .ttd-right {
+            width: 45%;
+            text-align: center;
+        }
+
+        .ttd-center {
+            width: 15%;
+            text-align: center;
+        }
+
+        .ttd-caption {
+            height: 10mm;
+            font-size: 12pt;
+        }
+
+        .ttd-sign {
+            height: 70mm;
+            /* ruang untuk tanda tangan */
+            vertical-align: bottom;
+            text-align: center;
+        }
+
+        .paren {
+            display: inline-block;
+            border-bottom: 1px solid #000;
+            padding: 0 5px 2px 5px;
+            /* kiri-kanan 5px, bawah 2px */
+            text-align: center;
+            white-space: nowrap;
+        }
+
+
+        .paren span {
+            display: inline-block;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            /* jika nama terlalu panjang, beri titik-titik */
+        }
+
+        .long-name {
+            font-size: 11pt;
+            /* mengecil otomatis jika perlu */
+        }
+
+
+        .qr {
+            width: 30mm;
+            height: 30mm;
+            object-fit: contain;
+            display: inline-block;
+        }
+
+        .footnote {
+            font-size: 10pt;
+            margin-top: 6mm;
+        }
+
+        /* kecilkan jarak antar baris pada tabel agar lebih rapat */
+        table.data td,
+        table.ttd-table td {
+            line-height: 1.2;
+        }
+
+        /* Style baru untuk QR di kanan bawah */
+        .qr-container {
+            position: absolute;
+            right: 16mm;
+            bottom: 8mm;
+            text-align: center;
+        }
+
+        .verifikasi-text {
+            font-size: 10pt;
+            margin-top: 2mm;
+        }
+
+    </style>
 </head>
 <body>
-  <section class="sheet" role="document" aria-label="Surat Kuasa F-1.07">
+    <section class="sheet">
+        <div class="kode">F 1.07</div>
+        <h1 class="title mt-5">SURAT KUASA DALAM PELAYANAN ADMINISTRASI KEPENDUDUKAN</h1>
 
-    <!-- QR Code dan Barcode di pojok kanan atas -->
-    @if($qrcode || $barcode)
-    <div class="qr-section">
-      @if($qrcode)
-        <div class="qr-code">
-          <img src="{{ $qrcode }}" alt="QR Code">
+        <!-- Paragraf pembuka dengan field inline supaya tidak memberi spasi berlebihan -->
+        <p class="lead">
+            Pada hari ini
+            <span class="field-inline">{{ $hari_pembuatan }}</span>
+            tanggal
+            <span class="field-inline" style="min-width:16mm">{{ $tanggal }}</span>
+            bulan
+            <span class="field-inline" style="min-width:36mm">{{ $bulan }}</span>
+            tahun
+            <span class="field-inline" style="min-width:24mm">{{ $tahun }}</span>
+            bertempat di
+            <span class="field-inline" style="min-width:60mm">{{ $surat_kuasa->kota_pengajuan ?? '' }}</span>,
+            saya :
+        </p>
+
+        <!-- Data pemohon -->
+        <table class="data">
+            <tr>
+                <td class="label">Nama lengkap</td>
+                <td class="sep">:</td>
+                <td class="value"><span class="field-block uppercase">{{ $surat_kuasa->nama_pemberi }}</span></td>
+            </tr>
+            <tr>
+                <td class="label">Tempat &amp; Tanggal lahir/Usia</td>
+                <td class="sep">:</td>
+                <td class="value"><span class="field-block">{{ $surat_kuasa->ttl_pemberi }} / {{ $surat_kuasa->usia_pemberi }} tahun</span></td>
+            </tr>
+            <tr>
+                <td class="label">Pekerjaan</td>
+                <td class="sep">:</td>
+                <td class="value"><span class="field-block">{{ $surat_kuasa->pekerjaan_pemberi }}</span></td>
+            </tr>
+            <tr>
+                <td class="label">Alamat</td>
+                <td class="sep">:</td>
+                <td class="value"><span class="field-block">{{ $surat_kuasa->alamat_pemberi }}</span></td>
+            </tr>
+        </table>
+
+        <p style="margin:0 0 4mm 0">Memberikan kuasa kepada:</p>
+
+        <!-- Data penerima -->
+        <table class="data">
+            <tr>
+                <td class="label">Nama lengkap</td>
+                <td class="sep">:</td>
+                <td class="value"><span class="field-block uppercase">{{ $surat_kuasa->nama_penerima }}</span></td>
+            </tr>
+            <tr>
+                <td class="label">NIK</td>
+                <td class="sep">:</td>
+                <td class="value"><span class="field-block">{{ $surat_kuasa->nik_penerima }}</span></td>
+            </tr>
+        </table>
+
+        <p style="margin:0 0 4mm 0;text-align:justify;">
+            Untuk mengisi formulir dalam pelayanan administrasi kependudukan, sesuai keterangan dan kelengkapan persyaratan yang saya berikan seperti keadaan yang sebenarnya dikarenakan kondisi saya dalam keadaan
+            <span class="field-inline" style="min-width:90mm">{{ $surat_kuasa->alasan }}</span>. <span style="font-size:10pt">*)</span>
+        </p>
+
+        <!-- Area tanda tangan: QR di tengah sejajar vertikal -->
+        <table class="ttd-table">
+            <tr>
+                <td class="ttd-left ttd-caption">Yang diberi kuasa,</td>
+                <td class="ttd-center"></td>
+                <td class="ttd-right ttd-caption">Yang memberi kuasa,</td>
+            </tr>
+            <tr>
+                <td class="ttd-left ttd-sign">
+                    <span class="paren">
+                        <span class="{{ strlen($surat_kuasa->nama_penerima) > 30 ? 'long-name' : '' }}">
+                            {{ $surat_kuasa->nama_penerima }}
+                        </span>
+                    </span>
+                </td>
+                <td class="ttd-center"></td>
+                <td class="ttd-right ttd-sign">
+                    <span class="paren">
+                        <span class="{{ strlen($surat_kuasa->nama_pemberi) > 30 ? 'long-name' : '' }}">
+                            {{ $surat_kuasa->nama_pemberi }}
+                        </span>
+                    </span>
+                </td>
+            </tr>
+        </table>
+
+        <!-- QR Code dipindah ke kanan bawah dengan teks verifikasi -->
+        <div class="qr-container">
+            @if(!empty($qrcode))
+            <img src="{{ $qrcode }}" alt="QR Code" class="qr">
+            <div class="verifikasi-text">
+                Dokumen ini telah terverifikasi secara elektronik<br>
+                {{ date('d-m-Y H:i:s') }}
+            </div>
+            @endif
         </div>
-      @endif
 
-      @if($barcode)
-        <div class="barcode">
-          <img src="{{ $barcode }}" alt="Barcode">
-          <div style="font-size: 6pt;">{{ $nomor_surat }}</div>
-        </div>
-      @endif
-    </div>
-    @endif
-
-    <div class="kode">F 1 .07</div>
-    <h1 class="title">Surat Kuasa Dalam Pelayanan Administrasi Kependudukan</h1>
-
-    <p>Pada hari ini <span class="field short">{{ $hari_pembuatan }}</span>
-      tanggal <span class="field short">{{ $tanggal }}</span>
-      bulan <span class="field short">{{ $bulan }}</span>
-      tahun <span class="field short">{{ $tahun }}</span>
-      bertempat di <span class="field long">{{ $surat_kuasa->kota_pengajuan ?? 'Tidak disebutkan' }}</span>, saya :</p>
-
-    <div class="blok avoid-break">
-      <p class="row"><span class="label">Nama lengkap</span>: <span class="field long">{{ strtoupper($surat_kuasa->nama_pemberi) }}</span></p>
-      <p class="row"><span class="label">Tempat &amp; Tanggal lahir/Usia</span>: <span class="field long">{{ $surat_kuasa->ttl_pemberi }} / {{ $surat_kuasa->usia_pemberi }} tahun</span></p>
-      <p class="row"><span class="label">Pekerjaan</span>: <span class="field long">{{ $surat_kuasa->pekerjaan_pemberi }}</span></p>
-      <p class="row"><span class="label">Alamat</span>: <span class="field long">{{ $surat_kuasa->alamat_pemberi }}</span></p>
-    </div>
-
-    <p class="blok">Memberikan kuasa kepada:</p>
-
-    <div class="blok avoid-break">
-      <p class="row"><span class="label">Nama lengkap</span>: <span class="field long">{{ strtoupper($surat_kuasa->nama_penerima) }}</span></p>
-      <p class="row"><span class="label">NIK</span>: <span class="field long">{{ $surat_kuasa->nik_penerima }}</span></p>
-    </div>
-
-    <p class="indent">
-      Untuk mengisi formulir dalam pelayanan administrasi kependudukan, sesuai keterangan dan kelengkapan persyaratan yang saya berikan seperti keadaan yang sebenarnya dikarenakan kondisi saya dalam keadaan
-      <span class="field med">{{ $surat_kuasa->alasan }}</span>. <span style="font-size:10pt">*)</span>
-    </p>
-
-    <div class="ttd-area avoid-break">
-      <div class="ttd">
-        <div>Yang diberi kuasa,</div>
-        <div class="name-line">(<span class="paren-line">{{ strtoupper($surat_kuasa->nama_penerima) }}</span>)</div>
-      </div>
-      <div class="ttd">
-        <div>Yang memberi kuasa,</div>
-        <div class="name-line">(<span class="paren-line">{{ strtoupper($surat_kuasa->nama_pemberi) }}</span>)</div>
-      </div>
-    </div>
-
-    <p class="footnote">*) coret yang tidak sesuai</p>
-  </section>
+        <p class="footnote">*) coret yang tidak sesuai</p>
+    </section>
 </body>
 </html>

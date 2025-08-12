@@ -87,15 +87,22 @@
                                 </div>
                             </div>
                             <div class="row">
-                                <div class="col-md-8 mb-3">
-                                    <label for="ttl_pemberi" class="form-label">Tempat, Tanggal Lahir <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="ttl_pemberi" name="ttl_pemberi"
-                                           value="{{ old('ttl_pemberi') }}" placeholder="Contoh: Jakarta, 15 Agustus 1990" required>
+                                <div class="col-md-6 mb-3">
+                                    <label for="tempat_lahir" class="form-label">Tempat Lahir <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="tempat_lahir" name="tempat_lahir"
+                                           value="{{ old('tempat_lahir') }}" placeholder="Contoh: Jakarta" required>
                                 </div>
-                                <div class="col-md-4 mb-3">
-                                    <label for="usia_pemberi" class="form-label">Usia <span class="text-danger">*</span></label>
+                                <div class="col-md-3 mb-3">
+                                    <label for="tanggal_lahir" class="form-label">Tanggal Lahir <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" id="tanggal_lahir" name="tanggal_lahir"
+                                           value="{{ old('tanggal_lahir') }}" required>
+                                    <small class="text-muted">Usia akan dihitung otomatis</small>
+                                </div>
+                                                                <div class="col-md-3 mb-3">
+                                    <label for="usia_pemberi" class="form-label">Usia</label>
                                     <input type="number" class="form-control" id="usia_pemberi" name="usia_pemberi"
-                                           value="{{ old('usia_pemberi') }}" min="17" max="100" required>
+                                           value="{{ old('usia_pemberi') }}" readonly style="background-color: #f8f9fa;">
+                                    <small class="text-muted">Dihitung otomatis dari tanggal lahir</small>
                                 </div>
                             </div>
                             <div class="row">
@@ -109,6 +116,12 @@
                                     <input type="text" class="form-control" id="no_hp_pemberi" name="no_hp_pemberi"
                                            value="{{ old('no_hp_pemberi') }}" placeholder="Contoh: 081234567890" required>
                                     <small class="text-muted">Notifikasi akan dikirim ke nomor ini</small>
+                                </div>
+                            </div>
+                            <div class="row">
+
+                                <div class="col-md-6 mb-3">
+                                    <!-- Spacer column untuk layout yang rapi -->
                                 </div>
                             </div>
                             <div class="mb-3">
@@ -174,11 +187,47 @@
     </div>
 </div>
 @endsection
-
 @push('scripts')
 <script>
 let currentSection = 1;
 const totalSections = 3;
+
+// Function to calculate age from birth date
+function calculateAge(birthDate) {
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+        age--;
+    }
+
+    return age;
+}
+
+// Auto calculate age when birth date changes
+$('#tanggal_lahir').change(function() {
+    const birthDate = $(this).val();
+    if (birthDate) {
+        const age = calculateAge(birthDate);
+        $('#usia_pemberi').val(age);
+
+        // Remove invalid class if age is valid
+        if (age >= 17 && age <= 100) {
+            $('#usia_pemberi').removeClass('is-invalid');
+        } else {
+            $('#usia_pemberi').addClass('is-invalid');
+        }
+
+        console.log('Birth date:', birthDate, 'Calculated age:', age);
+    } else {
+        $('#usia_pemberi').val('');
+    }
+
+    // Remove invalid class when date is selected
+    $(this).removeClass('is-invalid');
+});
 
 // Multi-step form navigation
 $('#nextBtn').click(function() {
@@ -186,13 +235,10 @@ $('#nextBtn').click(function() {
         if (currentSection < totalSections) {
             // Sembunyikan section saat ini
             $(`#section-${currentSection}`).addClass('d-none');
-
             // Pindah ke section berikutnya
             currentSection++;
-
             // Tampilkan section baru
             $(`#section-${currentSection}`).removeClass('d-none');
-
             // Update UI
             updateStepIndicator();
             updateNavigationButtons();
@@ -204,13 +250,10 @@ $('#prevBtn').click(function() {
     if (currentSection > 1) {
         // Sembunyikan section saat ini
         $(`#section-${currentSection}`).addClass('d-none');
-
         // Pindah ke section sebelumnya
         currentSection--;
-
         // Tampilkan section sebelumnya
         $(`#section-${currentSection}`).removeClass('d-none');
-
         // Update UI
         updateStepIndicator();
         updateNavigationButtons();
@@ -281,12 +324,21 @@ function validateCurrentSection() {
             console.log('Invalid NIK pemberi:', nik);
         }
 
-        // Age validation
+        // Age validation (calculated from birth date)
         const usia = parseInt($('#usia_pemberi').val());
         if (isNaN(usia) || usia < 17 || usia > 100) {
+            $('#tanggal_lahir').addClass('is-invalid');
             $('#usia_pemberi').addClass('is-invalid');
             valid = false;
             console.log('Invalid age:', usia);
+        }
+
+        // Birth date validation
+        const birthDate = $('#tanggal_lahir').val();
+        if (!birthDate) {
+            $('#tanggal_lahir').addClass('is-invalid');
+            valid = false;
+            console.log('Birth date required');
         }
 
         // File validation
@@ -357,7 +409,6 @@ $('#nik_pemberi, #nik_penerima').on('input', function() {
     if (this.value.length > 16) {
         this.value = this.value.substring(0, 16);
     }
-
     // Remove invalid class when user types
     $(this).removeClass('is-invalid');
 });
@@ -389,11 +440,20 @@ $('#suratKuasaForm').submit(function(e) {
     this.submit();
 });
 
-// Initialize on page load
+// Set max date for birth date (18 years ago)
 $(document).ready(function() {
+    // Set maximum date to 18 years ago
+    const maxDate = new Date();
+    maxDate.setFullYear(maxDate.getFullYear() - 17); // Minimum 17 years old
+    $('#tanggal_lahir').attr('max', maxDate.toISOString().split('T')[0]);
+
+    // Set minimum date to 100 years ago
+    const minDate = new Date();
+    minDate.setFullYear(minDate.getFullYear() - 100);
+    $('#tanggal_lahir').attr('min', minDate.toISOString().split('T')[0]);
+
     updateNavigationButtons();
     updateStepIndicator();
-
     console.log('Form initialized');
     console.log('Current section:', currentSection);
     console.log('Total sections:', totalSections);

@@ -260,11 +260,11 @@
                                 Pengajuan telah disetujui
                             </div>
                             @if($suratKuasa->pdf_file)
-                            <a href="{{ route('admin.surat-kuasa.generate', $suratKuasa->id) }}" class="btn btn-primary btn-block w-100">
+                            <a href="{{ route('admin.surat-kuasa.generate', $suratKuasa->id) }}" class="btn btn-primary btn-block mt-2 w-100">
                                 <i class="fas fa-download me-2"></i>
                                 Generate PDF
                             </a>
-                            <a href="{{ route('admin.surat-kuasa.download', $suratKuasa->id) }}" class="btn btn-primary btn-block w-100">
+                            <a href="{{ route('admin.surat-kuasa.download', $suratKuasa->id) }}" class="btn btn-primary btn-block mt-2 w-100">
                                 <i class="fas fa-download me-2"></i>
                                 Download PDF
                             </a>

@@ -154,7 +154,7 @@
                                 <strong>WhatsApp Admin:</strong><br>
                                 <a href="https://wa.me/6281234567890" class="text-success">
                                     <i class="fab fa-whatsapp me-1"></i>
-                                    +62 812-3456-7890
+                                    +62 896-1861-9880
                                 </a>
                             </div>
                             <div class="col-md-6">

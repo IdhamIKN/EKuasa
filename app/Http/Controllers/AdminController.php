@@ -155,6 +155,128 @@ class AdminController extends Controller
         }
     }
 
+    // public function generatePDF($id)
+    // {
+    //     // Pastikan hanya admin yang bisa
+    //     if ($redirect = $this->checkAdminRole()) {
+    //         return $redirect;
+    //     }
+
+    //     try {
+    //         $suratKuasa = SuratKuasa::findOrFail($id);
+
+    //         $pdfService = new PDFService();
+    //         $filePath = $pdfService->generateSuratKuasaPDF($suratKuasa);
+
+    //         // Update status
+    //         $suratKuasa->update([
+    //             'status' => SuratKuasa::STATUS_DISETUJUI
+    //         ]);
+
+    //         return response()->json([
+    //             'success'      => true,
+    //             'message'      => 'PDF berhasil dibuat',
+    //             'download_url' => route('admin.surat-kuasa.download', $id)
+    //         ]);
+    //     } catch (\Exception $e) {
+    //         Log::error('PDF generation failed: ' . $e->getMessage());
+
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Gagal generate PDF: ' . $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
+    public function generatePDF($id)
+    {
+        if ($redirect = $this->checkAdminRole()) {
+            return $redirect;
+        }
+
+        try {
+            $suratKuasa = SuratKuasa::findOrFail($id);
+
+            // Format nama
+            $suratKuasa->nama_penerima = $this->shortenNameWithInitialsRobust($suratKuasa->nama_penerima);
+            $suratKuasa->nama_pemberi = $this->shortenNameWithInitialsRobust($suratKuasa->nama_pemberi);
+            // dd( $suratKuasa->nama_penerima, $suratKuasa->nama_pemberi);
+            // Data untuk QR code
+            $qrData = [
+                'id' => $suratKuasa->id,
+                'pemberi' => $suratKuasa->nama_pemberi,
+                'penerima' => $suratKuasa->nama_penerima,
+                'tanggal' => now()->format('Y-m-d'),
+                'hash' => substr(md5($suratKuasa->id . config('app.key')), 0, 12)
+            ];
+
+            // Generate QR code
+            $qrCode = QrCode::format('png')
+                ->size(300)
+                ->errorCorrection('H')
+                ->generate(json_encode($qrData));
+
+            $qrCodeBase64 = base64_encode($qrCode);
+
+            // Generate PDF dengan menyertakan QR code
+            $pdfService = new PDFService();
+            $filePath = $pdfService->generateSuratKuasaPDF($suratKuasa, $qrCodeBase64);
+
+            // Update status
+            $suratKuasa->update(['status' => SuratKuasa::STATUS_DISETUJUI]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'PDF berhasil dibuat',
+                'download_url' => route('admin.surat-kuasa.download', $id)
+            ]);
+        } catch (\Exception $e) {
+            Log::error('PDF generation failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal generate PDF: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    private function shortenNameWithInitialsRobust($name)
+    {
+        // Validasi input
+        if (!is_string($name) || empty(trim($name))) {
+            return $name;
+        }
+
+        $name = trim(preg_replace('/\s+/', ' ', $name)); // Normalize multiple spaces
+
+        // Jika nama tidak lebih dari 20 karakter, return as is
+        if (strlen($name) <= 20) {
+            return $name;
+        }
+
+        // Pisah nama berdasarkan spasi
+        $parts = explode(' ', $name);
+        $parts = array_filter($parts); // Hapus elemen kosong
+
+        // Jika hanya satu kata, return as is
+        if (count($parts) <= 1) {
+            return $name;
+        }
+
+        // Ambil nama depan
+        $firstName = array_shift($parts);
+
+        // Buat inisial untuk nama belakang
+        $initials = array_map(function ($part) {
+            return strtoupper(substr($part, 0, 1)) . '.';
+        }, $parts);
+
+        return $firstName . ' ' . implode(' ', $initials);
+    }
+
+    /**
+     * Fungsi generatePDF yang sudah diperbaiki
+     */
+
+
+
     public function downloadPDF($id)
     {
         // Check admin role
@@ -174,204 +296,6 @@ class AdminController extends Controller
         }
 
         return response()->download($filePath, 'Surat_Kuasa_' . $suratKuasa->nama_pemberi . '.pdf');
-    }
-
-    // Method untuk generate PDF (update method yang sudah ada)
-    // public function generatePDF($id)
-    // {
-    //     // Check admin role
-    //     $roleCheck = $this->checkAdminRole();
-    //     if ($roleCheck) return $roleCheck;
-
-    //     $suratKuasa = SuratKuasa::findOrFail($id);
-
-    //     // Generate nomor surat
-    //     $nomor_surat = 'SK/' . str_pad($suratKuasa->id, 4, '0', STR_PAD_LEFT) . '/' . date('m/Y');
-
-    //     // Format tanggal pembuatan
-    //     $tanggal_pembuatan = Carbon::parse($suratKuasa->created_at)->translatedFormat('d F Y');
-
-    //     // Generate QR Code
-    //     $qrCodeData = json_encode([
-    //         'id' => $suratKuasa->id,
-    //         'nomor_surat' => $nomor_surat,
-    //         'nama_pemberi' => $suratKuasa->nama_pemberi,
-    //         'nama_penerima' => $suratKuasa->nama_penerima,
-    //         'tanggal_pembuatan' => $tanggal_pembuatan,
-    //         'verification_url' => url('/verify-surat/' . $suratKuasa->id),
-    //         'hash' => hash('sha256', $suratKuasa->id . $suratKuasa->nama_pemberi . $suratKuasa->created_at)
-    //     ]);
-
-    //     // Generate QR Code sebagai base64
-    //     $qrcode = base64_encode(QrCode::format('png')
-    //         ->size(300)
-    //         ->margin(2)
-    //         ->errorCorrection('H')
-    //         ->generate($qrCodeData));
-
-    //     $qrcode = 'data:image/png;base64,' . $qrcode;
-
-    //     $data = [
-    //         'surat_kuasa' => $suratKuasa,
-    //         'nomor_surat' => $nomor_surat,
-    //         'tanggal_pembuatan' => $tanggal_pembuatan,
-    //         'qrcode' => $qrcode
-    //     ];
-
-    //     // Generate PDF menggunakan library seperti DomPDF atau wkhtmltopdf
-    //     $pdf = PDF::loadView('pdf.surat-kuasa', $data)
-    //         ->setPaper('A4', 'portrait')
-    //         ->setOptions([
-    //             'defaultFont' => 'Inter',
-    //             'isHtml5ParserEnabled' => true,
-    //             'isPhpEnabled' => true,
-    //             'debugPng' => false,
-    //             'debugKeepTemp' => false,
-    //             'debugCss' => false,
-    //             'margin_top' => 10,
-    //             'margin_right' => 10,
-    //             'margin_bottom' => 10,
-    //             'margin_left' => 10,
-    //         ]);
-
-    //     // Simpan PDF
-    //     $fileName = 'surat-kuasa-' . $suratKuasa->id . '-' . time() . '.pdf';
-    //     $filePath = 'pdf/' . $fileName;
-
-    //     Storage::disk('public')->put($filePath, $pdf->output());
-
-    //     // Update record dengan path PDF
-    //     $suratKuasa->update([
-    //         'pdf_file' => $filePath,
-    //         'status' => SuratKuasa::STATUS_DISETUJUI
-    //     ]);
-
-    //     return response()->json([
-    //         'success' => true,
-    //         'message' => 'PDF berhasil dibuat',
-    //         'download_url' => route('admin.surat-kuasa.download', $id)
-    //     ]);
-    // }
-  public function generatePDF($id)
-    {
-        // Pastikan hanya admin yang bisa
-        if ($redirect = $this->checkAdminRole()) {
-            return $redirect;
-        }
-
-        $suratKuasa = SuratKuasa::findOrFail($id);
-
-        // Nomor surat
-        $nomor_surat = 'SK/' . str_pad($suratKuasa->id, 4, '0', STR_PAD_LEFT) . '/' . date('m/Y');
-
-        // Set locale dan ambil komponen tanggal
-        $created = Carbon::parse($suratKuasa->created_at)->locale('id');
-        Carbon::setLocale('id');
-
-        $hari_pembuatan = $created->translatedFormat('l');
-        $tanggal = $created->translatedFormat('d');
-        $bulan = $created->translatedFormat('F');
-        $tahun = $created->translatedFormat('Y');
-        $tanggal_pembuatan = $created->translatedFormat('d F Y');
-
-        // Data untuk QR code
-        $qrCodeData = [
-            'id'                => $suratKuasa->id,
-            'nomor_surat'       => $nomor_surat,
-            'nama_pemberi'      => $suratKuasa->nama_pemberi,
-            'nama_penerima'     => $suratKuasa->nama_penerima,
-            'tanggal_pembuatan' => $tanggal_pembuatan,
-            'verification_url'  => url('/verify-surat/' . $suratKuasa->id),
-            'hash'              => hash('sha256', $suratKuasa->id . $suratKuasa->nama_pemberi . $suratKuasa->created_at)
-        ];
-
-        // Generate QR Code dengan error handling
-        $qrcode = null;
-        try {
-            Log::info('Attempting to generate QR code...');
-
-            $qrImageData = QrCode::format('png')
-                ->size(300)
-                ->margin(2)
-                ->errorCorrection('H')
-                ->generate(json_encode($qrCodeData));
-
-            $qrcode = 'data:image/png;base64,' . base64_encode($qrImageData);
-
-            Log::info('QR Code generated successfully');
-
-        } catch (\Exception $e) {
-            Log::error('QR Code generation failed: ' . $e->getMessage());
-            Log::error('Error trace: ' . $e->getTraceAsString());
-
-            // Set QR code ke null - template harus handle ini
-            $qrcode = null;
-        }
-
-        // Generate barcode dengan error handling
-        $barcode = null;
-        try {
-            $generator = new BarcodeGeneratorPNG();
-            $barcodePng = $generator->getBarcode($nomor_surat, $generator::TYPE_CODE_128);
-            $barcode = 'data:image/png;base64,' . base64_encode($barcodePng);
-
-            Log::info('Barcode generated successfully');
-
-        } catch (\Exception $e) {
-            Log::error('Barcode generation failed: ' . $e->getMessage());
-            $barcode = null;
-        }
-
-        // Data untuk view
-        $data = [
-            'surat_kuasa'       => $suratKuasa,
-            'nomor_surat'       => $nomor_surat,
-            'tanggal_pembuatan' => $tanggal_pembuatan,
-            'hari_pembuatan'    => $hari_pembuatan,
-            'tanggal'           => $tanggal,
-            'bulan'             => $bulan,
-            'tahun'             => $tahun,
-            'qrcode'            => $qrcode,
-            'barcode'           => $barcode,
-        ];
-
-        try {
-            // Generate PDF
-            $pdf = PDF::loadView('pdf.surat-kuasa', $data)
-                ->setPaper('A4', 'portrait')
-                ->setOptions([
-                    'defaultFont'           => 'Times New Roman',
-                    'isHtml5ParserEnabled'  => true,
-                    'isPhpEnabled'          => true,
-                ]);
-
-            // Simpan PDF
-            $fileName = 'surat-kuasa-' . $suratKuasa->id . '-' . time() . '.pdf';
-            $filePath = 'pdf/' . $fileName;
-            Storage::disk('public')->put($filePath, $pdf->output());
-
-            // Update record
-            $suratKuasa->update([
-                'pdf_file' => $filePath,
-                'status'   => SuratKuasa::STATUS_DISETUJUI
-            ]);
-
-            Log::info('PDF generated successfully: ' . $filePath);
-
-            return response()->json([
-                'success'      => true,
-                'message'      => 'PDF berhasil dibuat',
-                'download_url' => route('admin.surat-kuasa.download', $id)
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('PDF generation failed: ' . $e->getMessage());
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal generate PDF: ' . $e->getMessage()
-            ], 500);
-        }
     }
 
     // Method tambahan untuk verifikasi QR Code

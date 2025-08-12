@@ -71,6 +71,33 @@
             font-size: 0.875rem;
             font-weight: 500;
         }
+
+        /* Custom styles for better mobile navigation */
+        .navbar-brand {
+            font-size: 1.1rem;
+        }
+
+        @media (max-width: 991.98px) {
+            .navbar-brand {
+                font-size: 1rem;
+            }
+            .navbar-nav .nav-link {
+                padding: 0.75rem 1rem;
+                border-bottom: 1px solid rgba(255,255,255,0.1);
+            }
+            .navbar-nav .nav-link:last-child {
+                border-bottom: none;
+            }
+        }
+
+        .navbar-toggler {
+            border: none;
+            padding: 0.25rem 0.5rem;
+        }
+
+        .navbar-toggler:focus {
+            box-shadow: none;
+        }
     </style>
     @stack('styles')
 </head>
@@ -82,27 +109,36 @@
                 Surat Kuasa Online
             </a>
 
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="{{ route('surat-kuasa.track-form') }}">
-                    <i class="fas fa-search me-1"></i>
-                    Lacak Pengajuan
-                </a>
-                @auth
-                     @if(auth()->user()->isAdmin())
-                        <a class="nav-link" href="{{ route('admin.dashboard') }}">
-                            <i class="fas fa-tachometer-alt me-1"></i>
-                            Dashboard Admin
-                        </a>
-                        <a class="nav-link" href="{{ route('logout') }}"
-                           onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                            <i class="fas fa-sign-out-alt me-1"></i>
-                            Keluar
-                        </a>
-                        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                            @csrf
-                        </form>
-                    @endrole
-                @endauth
+            <!-- Hamburger button for mobile -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Collapsible navigation content -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <div class="navbar-nav ms-auto">
+                    <a class="nav-link" href="{{ route('surat-kuasa.track-form') }}">
+                        <i class="fas fa-search me-1"></i>
+                        Lacak Pengajuan
+                    </a>
+                    @auth
+                        @if(auth()->user()->isAdmin())
+                            <a class="nav-link" href="{{ route('admin.dashboard') }}">
+                                <i class="fas fa-tachometer-alt me-1"></i>
+                                Dashboard Admin
+                            </a>
+                            <a class="nav-link" href="{{ route('logout') }}"
+                               onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                <i class="fas fa-sign-out-alt me-1"></i>
+                                Keluar
+                            </a>
+                            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                                @csrf
+                            </form>
+                        @endif
+                    @endauth
+                </div>
             </div>
         </div>
     </nav>

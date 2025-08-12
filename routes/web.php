@@ -4,6 +4,8 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SuratKuasaController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\TestController;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -60,3 +62,17 @@ Route::get('/admin', function () {
 Route::get('/home', function () {
     return redirect()->route('surat-kuasa.create');
 });
+
+
+Route::get('/add-admin-role/{id}', function ($id) {
+    $user = User::findOrFail($id);
+
+    if (!\Spatie\Permission\Models\Role::where('name', 'admin')->exists()) {
+        \Spatie\Permission\Models\Role::create(['name' => 'admin']);
+    }
+
+    $user->assignRole('admin');
+
+    return "Role admin berhasil ditambahkan ke user {$user->name}";
+});
+Route::get('/test-sql', [TestController::class, 'testQueries']);

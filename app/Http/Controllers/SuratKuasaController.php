@@ -28,7 +28,8 @@ class SuratKuasaController extends Controller
         $request->validate([
             'nik_pemberi' => 'required|string|size:16',
             'nama_pemberi' => 'required|string|max:255',
-            'ttl_pemberi' => 'required|string|max:255',
+            'tempat_lahir' => 'required|string|max:100',
+            'tanggal_lahir' => 'required|date|before_or_equal:' . now()->subYears(17)->format('Y-m-d'),
             'usia_pemberi' => 'required|integer|min:17|max:100',
             'pekerjaan_pemberi' => 'required|string|max:255',
             'alamat_pemberi' => 'required|string',
@@ -42,9 +43,13 @@ class SuratKuasaController extends Controller
             'nik_pemberi.required' => 'NIK Pemberi Kuasa wajib diisi',
             'nik_pemberi.size' => 'NIK harus 16 digit',
             'nama_pemberi.required' => 'Nama Pemberi Kuasa wajib diisi',
-            'ttl_pemberi.required' => 'Tempat Tanggal Lahir wajib diisi',
+            'tempat_lahir.required' => 'Tempat lahir wajib diisi',
+            'tanggal_lahir.required' => 'Tanggal lahir wajib diisi',
+            'tanggal_lahir.date' => 'Format tanggal lahir tidak valid',
+            'tanggal_lahir.before_or_equal' => 'Umur minimal 17 tahun',
             'usia_pemberi.required' => 'Usia wajib diisi',
             'usia_pemberi.min' => 'Usia minimal 17 tahun',
+            'usia_pemberi.max' => 'Usia maksimal 100 tahun',
             'pekerjaan_pemberi.required' => 'Pekerjaan wajib diisi',
             'alamat_pemberi.required' => 'Alamat wajib diisi',
             'nama_penerima.required' => 'Nama Penerima Kuasa wajib diisi',
@@ -60,6 +65,17 @@ class SuratKuasaController extends Controller
         ]);
 
         try {
+            // Combine tempat_lahir and tanggal_lahir into ttl_pemberi
+            $tanggalLahir = Carbon::parse($request->tanggal_lahir);
+            $ttlPemberi = $request->tempat_lahir . ', ' . $tanggalLahir->locale('id')->translatedFormat('d F Y');
+
+            // Double-check age calculation (optional security measure)
+            // $calculatedAge = $tanggalLahir->diffInYears(now());
+            // if ($calculatedAge != $request->usia_pemberi) {
+            //     return back()->withInput()
+            //         ->withErrors(['usia_pemberi' => 'Usia tidak sesuai dengan tanggal lahir yang dipilih']);
+            // }
+
             // Handle file upload
             if ($request->hasFile('foto_pemberi_ktp')) {
                 $file = $request->file('foto_pemberi_ktp');
@@ -73,7 +89,7 @@ class SuratKuasaController extends Controller
                 'tanggal_pengajuan' => now()->toDateString(),
                 'kota_pengajuan' => $request->kota_pengajuan,
                 'nama_pemberi' => $request->nama_pemberi,
-                'ttl_pemberi' => $request->ttl_pemberi,
+                'ttl_pemberi' => $ttlPemberi, // Combined tempat + tanggal lahir
                 'usia_pemberi' => $request->usia_pemberi,
                 'pekerjaan_pemberi' => $request->pekerjaan_pemberi,
                 'alamat_pemberi' => $request->alamat_pemberi,
@@ -90,7 +106,6 @@ class SuratKuasaController extends Controller
 
             return redirect()->route('surat-kuasa.success', $suratKuasa->id)
                 ->with('success', 'Pengajuan surat kuasa berhasil dikirim! Anda akan mendapat notifikasi melalui WhatsApp.');
-
         } catch (\Exception $e) {
             // Delete uploaded file if exists
             if (isset($filePath)) {

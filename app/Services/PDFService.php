@@ -7,6 +7,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Log;
 use Picqer\Barcode\BarcodeGeneratorPNG;
 
 class PDFService
@@ -26,7 +27,7 @@ class PDFService
         $tahun = $created->translatedFormat('Y');
         $tanggal_pembuatan = $created->translatedFormat('d F Y');
 
-        // Generate QR Code
+        // Data untuk QR code
         $qrCodeData = [
             'id'                => $suratKuasa->id,
             'nomor_surat'       => $nomor_surat,
@@ -37,20 +38,29 @@ class PDFService
             'hash'              => hash('sha256', $suratKuasa->id . $suratKuasa->nama_pemberi . $suratKuasa->created_at)
         ];
 
-        $qrcode = 'data:image/png;base64,' . base64_encode(
-            QrCode::format('png')
-                  ->size(300)
-                  ->margin(2)
-                  ->errorCorrection('H')
-                  ->generate(json_encode($qrCodeData))
-        );
+        // Generate QR Code dengan error handling
+        $qrcode = null;
+        try {
+            Log::info('Attempting to generate QR code...');
 
-        // Generate barcode
-        $generator = new BarcodeGeneratorPNG();
-        $barcodePng = $generator->getBarcode($nomor_surat, $generator::TYPE_CODE_128);
-        $barcode = 'data:image/png;base64,' . base64_encode($barcodePng);
+            $qrImageData = QrCode::format('png')
+                ->size(400) // Ukuran lebih kecil karena akan ditempatkan di bawah
+                ->margin(1)
+                ->errorCorrection('H')
+                ->generate(json_encode($qrCodeData));
 
-        // Data untuk view
+            $qrcode = 'data:image/png;base64,' . base64_encode($qrImageData);
+
+            Log::info('QR Code generated successfully');
+        } catch (\Exception $e) {
+            Log::error('QR Code generation failed: ' . $e->getMessage());
+            Log::error('Error trace: ' . $e->getTraceAsString());
+
+            // Set QR code ke null - template harus handle ini
+            $qrcode = null;
+        }
+
+        // Data untuk view (tanpa barcode)
         $data = [
             'surat_kuasa'       => $suratKuasa,
             'nomor_surat'       => $nomor_surat,
@@ -60,28 +70,39 @@ class PDFService
             'bulan'             => $bulan,
             'tahun'             => $tahun,
             'qrcode'            => $qrcode,
-            'barcode'           => $barcode,
         ];
 
-        // PASTIKAN MENGGUNAKAN VIEW F-1.07
-        $pdf = PDF::loadView('pdf.surat-kuasa', $data)
-            ->setPaper('A4', 'portrait')
-            ->setOptions([
-                'defaultFont'           => 'Times New Roman',
-                'isHtml5ParserEnabled'  => true,
-                'isPhpEnabled'          => true,
+        try {
+            // Generate PDF dengan margin yang disesuaikan
+            $pdf = PDF::loadView('pdf.surat-kuasa', $data)
+                ->setPaper('A4', 'portrait')
+                ->setOptions([
+                    'defaultFont'           => 'Times New Roman',
+                    'isHtml5ParserEnabled'  => true,
+                    'isPhpEnabled'          => true,
+                    'debugKeepTemp'         => false,
+                    'debugPng'              => false,
+                    'debugCss'              => false,
+                    'fontHeightRatio'       => 1.1,
+                    'dpi'                   => 150,
+                ]);
+
+            // Simpan PDF
+            $fileName = 'surat-kuasa-' . $suratKuasa->id . '-' . time() . '.pdf';
+            $filePath = 'pdf/' . $fileName;
+            Storage::disk('public')->put($filePath, $pdf->output());
+
+            // Update record
+            $suratKuasa->update([
+                'pdf_file' => $filePath
             ]);
 
-        // Simpan PDF
-        $fileName = 'surat-kuasa-' . $suratKuasa->id . '-' . time() . '.pdf';
-        $filePath = 'pdf/' . $fileName;
-        Storage::disk('public')->put($filePath, $pdf->output());
+            Log::info('PDF generated successfully: ' . $filePath);
 
-        // Update record
-        $suratKuasa->update([
-            'pdf_file' => $filePath
-        ]);
-
-        return $filePath;
+            return $filePath;
+        } catch (\Exception $e) {
+            Log::error('PDF generation failed: ' . $e->getMessage());
+            throw $e;
+        }
     }
 }
