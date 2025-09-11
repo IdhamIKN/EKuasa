@@ -1,6 +1,5 @@
 <?php
 // app/Services/WhatsAppService.php
-
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
@@ -10,11 +9,13 @@ class WhatsAppService
 {
     private $apiUrl;
     private $apiKey;
+    private $sender;
 
     public function __construct()
     {
         $this->apiUrl = config('services.whatsapp.api_url');
         $this->apiKey = config('services.whatsapp.api_key');
+        $this->sender = config('services.whatsapp.sender');
     }
 
     public function sendMessage($phoneNumber, $message)
@@ -25,10 +26,9 @@ class WhatsAppService
 
             $response = Http::post($this->apiUrl, [
                 'api_key' => $this->apiKey,
-                'receiver' => $formattedPhone,
-                'data' => [
-                    'message' => $message
-                ]
+                'sender' => $this->sender,
+                'number' => $formattedPhone, // Ubah dari 'receiver' ke 'number'
+                'message' => $message // Ubah struktur data, tidak perlu array 'data'
             ]);
 
             if ($response->successful()) {
@@ -54,6 +54,45 @@ class WhatsAppService
         }
     }
 
+    public function sendMediaMessage($phoneNumber, $mediaUrl, $caption = '', $mediaType = 'image')
+    {
+        try {
+            // Format phone number
+            $formattedPhone = $this->formatPhoneNumber($phoneNumber);
+
+            $response = Http::post($this->apiUrl, [
+                'api_key' => $this->apiKey,
+                'sender' => $this->sender,
+                'number' => $formattedPhone,
+                'media_type' => $mediaType,
+                'caption' => $caption,
+                'url' => $mediaUrl
+            ]);
+
+            if ($response->successful()) {
+                Log::info('WhatsApp media message sent successfully', [
+                    'phone' => $formattedPhone,
+                    'media_type' => $mediaType,
+                    'response' => $response->json()
+                ]);
+                return true;
+            } else {
+                Log::error('Failed to send WhatsApp media message', [
+                    'phone' => $formattedPhone,
+                    'status' => $response->status(),
+                    'response' => $response->body()
+                ]);
+                return false;
+            }
+        } catch (\Exception $e) {
+            Log::error('WhatsApp media service error: ' . $e->getMessage(), [
+                'phone' => $phoneNumber,
+                'trace' => $e->getTraceAsString()
+            ]);
+            return false;
+        }
+    }
+
     public function sendPendingNotification($suratKuasa)
     {
         $message = "🔔 *SURAT KUASA ONLINE*\n\n";
@@ -63,6 +102,8 @@ class WhatsAppService
         $message .= "• Tanggal: {$suratKuasa->tanggal_pengajuan_formatted}\n";
         $message .= "• Status: *Menunggu Verifikasi*\n\n";
         $message .= "Mohon tunggu proses verifikasi dari admin. Anda akan mendapat notifikasi lebih lanjut.\n\n";
+        // $message .= "Lacak Pengajuan: " . route('surat-kuasa.show', $suratKuasa->id) . "\n\n";
+        $message .= "Lacak Pengajuan: " . route('surat-kuasa.track-form', ['id' => $suratKuasa->id, 'nik' => $suratKuasa->nik_pemberi]) . "\n\n";
         $message .= "Terima kasih.";
 
         return $this->sendMessage($suratKuasa->no_hp_pemberi, $message);
@@ -76,7 +117,8 @@ class WhatsAppService
         $message .= "Detail pengajuan:\n";
         $message .= "• ID: {$suratKuasa->id}\n";
         $message .= "• Penerima Kuasa: {$suratKuasa->nama_penerima}\n";
-        $message .= "• Tanggal Disetujui: " . now()->format('d F Y H:i') . "\n\n";
+        // $message .= "• Tanggal Disetujui: " . now()->format('d F Y H:i') . "\n\n";
+        $message .= "• Tanggal Disetujui: " . date('d F Y H:i') . "\n\n";
 
         if ($suratKuasa->pdf_file) {
             $pdfUrl = asset('storage/' . $suratKuasa->pdf_file);

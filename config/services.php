@@ -33,8 +33,21 @@ return [
     ],
 
     'whatsapp' => [
-        'api_url' => env('WHATSAPP_API_URL', 'https://wa.itbmd.my.id/send-message'),
-        'api_key' => env('WHATSAPP_API_KEY', 'u7pjIvzrpGx1ZPjRiHKr5wrAfp2LjU'),
+        'api_url' => env('WHATSAPP_API_URL'),
+        'api_key' => env('WHATSAPP_API_KEY'),
+        'sender' => env('WHATSAPP_SENDER_NUMBER'),
     ],
+
+    'google' => [
+        'enabled' => env('GOOGLE_SHEETS_ENABLED', false),
+        'service_account_path' => env('GOOGLE_SERVICE_ACCOUNT_PATH', storage_path('app/google-service-account.json')),
+        'spreadsheet_id' => env('GOOGLE_SPREADSHEET_ID'),
+        'drive_folder_id' => env('GOOGLE_DRIVE_FOLDER_ID', null),
+    ],
+
+    'mail' => [
+        'admin_email' => env('ADMIN_EMAIL', 'admin@example.com'),
+    ],
+
 
 ];

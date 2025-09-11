@@ -159,10 +159,15 @@
                                 <textarea class="form-control" id="alasan" name="alasan" rows="4"
                                           placeholder="Contoh: Sedang sakit dan tidak dapat hadir secara langsung untuk mengurus..." required>{{ old('alasan') }}</textarea>
                             </div>
-                            <div class="alert alert-info">
+                            {{-- <div class="alert alert-info">
                                 <i class="fas fa-info-circle me-2"></i>
                                 <strong>Informasi:</strong> Setelah pengajuan berhasil, Anda akan menerima notifikasi WhatsApp.
                                 Proses verifikasi akan dilakukan maksimal 1x24 jam. Jika disetujui, link download PDF akan dikirimkan.
+                            </div> --}}
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Informasi:</strong> Setelah pengajuan berhasil, Anda dapat melakukan pelacakan.
+                                Proses verifikasi akan dilakukan maksimal 1x24 jam. Jika disetujui, PDF akan dapat dii unduh melalui halaman pelacakan.
                             </div>
                         </div>
                         <!-- Navigation Buttons -->

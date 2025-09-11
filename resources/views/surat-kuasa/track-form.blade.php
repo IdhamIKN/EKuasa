@@ -25,19 +25,18 @@
                 <div class="card-body p-5">
                     <!-- Alert Messages -->
                     @if($errors->any())
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            <strong>Error:</strong>
-                            @foreach($errors->all() as $error)
-                                {{ $error }}
-                            @endforeach
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Error:</strong>
+                        @foreach($errors->all() as $error)
+                        {{ $error }}
+                        @endforeach
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
                     @endif
 
                     <form method="POST" action="{{ route('surat-kuasa.track') }}">
                         @csrf
-
                         <div class="mb-4 text-center">
                             <i class="fas fa-file-search fa-3x text-primary mb-3"></i>
                             <h4>Lacak Pengajuan Anda</h4>
@@ -45,13 +44,15 @@
                         </div>
 
                         <div class="mb-4">
-                            <label for="id" class="form-label">
-                                <i class="fas fa-fingerprint me-2"></i>
-                                ID Pengajuan <span class="text-danger">*</span>
+                            <label for="tracking_number" class="form-label">
+                                <i class="fas fa-barcode me-2"></i>
+                                Nomor Tracking <span class="text-danger">*</span>
                             </label>
-                            <input type="text" class="form-control form-control-lg" id="id" name="id"
-                                   value="{{ old('id') }}" placeholder="Masukkan ID pengajuan" required>
-                            <small class="text-muted">ID pengajuan yang Anda terima saat mendaftar</small>
+                            <input type="text" class="form-control form-control-lg text-uppercase" id="tracking_number" name="tracking_number" value="{{ old('tracking_number') }}" placeholder="Contoh: ABC1009250001" maxlength="15" style="font-family: monospace; letter-spacing: 1px;" required>
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Format: 3 huruf + tanggal, bulan, tahun pengajuan + nomor urut (15 karakter)
+                            </small>
                         </div>
 
                         <div class="mb-4">
@@ -59,8 +60,7 @@
                                 <i class="fas fa-id-card me-2"></i>
                                 NIK Pemberi Kuasa <span class="text-danger">*</span>
                             </label>
-                            <input type="text" class="form-control form-control-lg" id="nik" name="nik"
-                                   value="{{ old('nik') }}" placeholder="Masukkan 16 digit NIK" maxlength="16" required>
+                            <input type="text" class="form-control form-control-lg" id="nik" name="nik" value="{{ old('nik') }}" placeholder="Masukkan 16 digit NIK" maxlength="16" required>
                             <small class="text-muted">16 digit NIK sesuai yang didaftarkan</small>
                         </div>
 
@@ -121,32 +121,33 @@
 
 @push('scripts')
 <script>
-// NIK input formatting
-$('#nik').on('input', function() {
-    this.value = this.value.replace(/\D/g, '');
-    if (this.value.length > 16) {
-        this.value = this.value.substring(0, 16);
-    }
-});
+    // NIK input formatting
+    $('#nik').on('input', function() {
+        this.value = this.value.replace(/\D/g, '');
+        if (this.value.length > 16) {
+            this.value = this.value.substring(0, 16);
+        }
+    });
 
-// Form validation
-$('form').on('submit', function(e) {
-    const id = $('#id').val().trim();
-    const nik = $('#nik').val().trim();
+    // Form validation
+    $('form').on('submit', function(e) {
+        const id = $('#id').val().trim();
+        const nik = $('#nik').val().trim();
 
-    if (!id) {
-        e.preventDefault();
-        alert('ID pengajuan wajib diisi');
-        $('#id').focus();
-        return false;
-    }
+        if (!id) {
+            e.preventDefault();
+            alert('ID pengajuan wajib diisi');
+            $('#id').focus();
+            return false;
+        }
 
-    if (!nik || nik.length !== 16) {
-        e.preventDefault();
-        alert('NIK harus 16 digit');
-        $('#nik').focus();
-        return false;
-    }
-});
+        if (!nik || nik.length !== 16) {
+            e.preventDefault();
+            alert('NIK harus 16 digit');
+            $('#nik').focus();
+            return false;
+        }
+    });
+
 </script>
 @endpush

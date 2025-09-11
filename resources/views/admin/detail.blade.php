@@ -259,10 +259,30 @@
                                 <i class="fas fa-check-circle me-2"></i>
                                 Pengajuan telah disetujui
                             </div>
+                            {{-- Pesan Sukses --}}
+                            @if (session('success'))
+                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                <strong>Berhasil!</strong> {{ session('success') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                            @endif
+
+                            {{-- Pesan Error --}}
+                            @if (session('error'))
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <strong>Gagal!</strong> {{ session('error') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                            @endif
+
                             @if($suratKuasa->pdf_file)
                             <a href="{{ route('admin.surat-kuasa.generate', $suratKuasa->id) }}" class="btn btn-primary btn-block mt-2 w-100">
                                 <i class="fas fa-download me-2"></i>
                                 Generate PDF
+                            </a>
+                            <a href="{{ route('admin.surat-kuasa.preview', $suratKuasa->id) }}" target="_blank" class="btn btn-primary btn-block mt-2 w-100">
+                                <i class="fas fa-download me-2"></i>
+                                Preview PDF
                             </a>
                             <a href="{{ route('admin.surat-kuasa.download', $suratKuasa->id) }}" class="btn btn-primary btn-block mt-2 w-100">
                                 <i class="fas fa-download me-2"></i>
@@ -333,7 +353,7 @@
                     Setelah disetujui, sistem akan otomatis:
                     <ul class="mb-0 mt-2">
                         <li>Generate PDF surat kuasa dengan barcode</li>
-                        <li>Mengirim notifikasi WhatsApp beserta link download</li>
+                        {{-- <li>Mengirim notifikasi WhatsApp beserta link download</li> --}}
                     </ul>
                 </div>
             </div>
@@ -370,9 +390,13 @@
                         <label for="alasan_penolakan" class="form-label">Alasan Penolakan <span class="text-danger">*</span></label>
                         <textarea class="form-control" id="alasan_penolakan" name="alasan_penolakan" rows="4" placeholder="Contoh: Foto KTP tidak jelas, data tidak lengkap, dll." required></textarea>
                     </div>
-                    <div class="alert alert-warning">
+                    {{-- <div class="alert alert-warning">
                         <i class="fas fa-exclamation-triangle me-2"></i>
                         Alasan penolakan akan dikirimkan ke pemohon melalui WhatsApp
+                    </div> --}}
+                                        <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Alasan penolakan akan dikirimkan ke pemohon
                     </div>
                 </div>
                 <div class="modal-footer">

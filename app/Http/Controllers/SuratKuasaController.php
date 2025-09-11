@@ -69,27 +69,24 @@ class SuratKuasaController extends Controller
             $tanggalLahir = Carbon::parse($request->tanggal_lahir);
             $ttlPemberi = $request->tempat_lahir . ', ' . $tanggalLahir->locale('id')->translatedFormat('d F Y');
 
-            // Double-check age calculation (optional security measure)
-            // $calculatedAge = $tanggalLahir->diffInYears(now());
-            // if ($calculatedAge != $request->usia_pemberi) {
-            //     return back()->withInput()
-            //         ->withErrors(['usia_pemberi' => 'Usia tidak sesuai dengan tanggal lahir yang dipilih']);
-            // }
-
             // Handle file upload
             if ($request->hasFile('foto_pemberi_ktp')) {
-                $file = $request->file('foto_pemberi_ktp');
+                $file = $request->file('foto_pemberi_ktp'); // Fixed typo here
                 $fileName = time() . '_' . $file->getClientOriginalName();
                 $filePath = $file->storeAs('ktp-photos', $fileName, 'public');
             }
 
+            // Generate tracking number
+            $trackingNumber = SuratKuasa::generateTrackingNumber();
+
             // Create surat kuasa record
             $suratKuasa = SuratKuasa::create([
+                'tracking_number' => $trackingNumber, // Add tracking number
                 'nik_pemberi' => $request->nik_pemberi,
                 'tanggal_pengajuan' => now()->toDateString(),
                 'kota_pengajuan' => $request->kota_pengajuan,
                 'nama_pemberi' => $request->nama_pemberi,
-                'ttl_pemberi' => $ttlPemberi, // Combined tempat + tanggal lahir
+                'ttl_pemberi' => $ttlPemberi,
                 'usia_pemberi' => $request->usia_pemberi,
                 'pekerjaan_pemberi' => $request->pekerjaan_pemberi,
                 'alamat_pemberi' => $request->alamat_pemberi,
@@ -101,11 +98,12 @@ class SuratKuasaController extends Controller
                 'status' => SuratKuasa::STATUS_PENDING
             ]);
 
-            // Send WhatsApp notification
+            // Send WhatsApp notification with tracking number
             $this->whatsappService->sendPendingNotification($suratKuasa);
 
             return redirect()->route('surat-kuasa.success', $suratKuasa->id)
-                ->with('success', 'Pengajuan surat kuasa berhasil dikirim! Anda akan mendapat notifikasi melalui WhatsApp.');
+                ->with('success', 'Pengajuan surat kuasa berhasil dikirim! Nomor tracking Anda: ' . $trackingNumber)
+                ->with('tracking_number', $trackingNumber);
         } catch (\Exception $e) {
             // Delete uploaded file if exists
             if (isset($filePath)) {
@@ -126,23 +124,143 @@ class SuratKuasaController extends Controller
     public function track(Request $request)
     {
         $request->validate([
-            'id' => 'required|string',
-            'nik' => 'required|string|size:16'
+            'tracking_number' => 'nullable|string|size:15',
+            'nik' => 'nullable|string|size:16',
+            'id' => 'nullable|integer'
+        ], [
+            'tracking_number.size' => 'Format nomor tracking tidak valid',
+            'nik.size' => 'NIK harus 16 digit',
         ]);
 
-        $suratKuasa = SuratKuasa::where('id', $request->id)
-            ->where('nik_pemberi', $request->nik)
-            ->first();
+        // cek berdasarkan kondisi
+        if ($request->filled('tracking_number') && $request->filled('nik')) {
+            $suratKuasa = SuratKuasa::findByTrackingNumber(
+                $request->tracking_number,
+                $request->nik
+            );
+        } elseif ($request->filled('tracking_number')) {
+            $suratKuasa = SuratKuasa::where('tracking_number', $request->tracking_number)->first();
+        } elseif ($request->filled('id')) {
+            $suratKuasa = SuratKuasa::find($request->id);
+        } else {
+            return back()->withErrors(['error' => 'Silakan masukkan ID atau Nomor Tracking.']);
+        }
 
         if (!$suratKuasa) {
-            return back()->withErrors(['error' => 'Data tidak ditemukan. Periksa kembali ID dan NIK Anda.']);
+            return back()->withInput()
+                ->withErrors(['error' => 'Data tidak ditemukan.']);
         }
 
         return view('surat-kuasa.track', compact('suratKuasa'));
     }
 
-    public function showTrackForm()
+
+    // public function track(Request $request)
+    // {
+    //     $request->validate([
+    //         'tracking_number' => 'required|string|size:15', // ABC10092025001 = 15 karakter
+    //         'nik' => 'required|string|size:16'
+    //     ], [
+    //         'tracking_number.required' => 'Nomor tracking wajib diisi',
+    //         'tracking_number.size' => 'Format nomor tracking tidak valid',
+    //         'nik.required' => 'NIK wajib diisi',
+    //         'nik.size' => 'NIK harus 16 digit'
+    //     ]);
+
+    //     $suratKuasa = SuratKuasa::findByTrackingNumber(
+    //         $request->tracking_number,
+    //         $request->nik
+    //     );
+
+    //     if (!$suratKuasa) {
+    //         return back()->withInput()
+    //             ->withErrors(['error' => 'Data tidak ditemukan. Periksa kembali nomor tracking dan NIK Anda.']);
+    //     }
+
+    //     return view('surat-kuasa.track', compact('suratKuasa'));
+    // }
+
+    // 4. Update showTrackForm Method
+    public function showTrackForm(Request $request)
     {
-        return view('surat-kuasa.track-form');
+        if ($request->filled('tracking_number') && $request->filled('nik')) {
+            $suratKuasa = SuratKuasa::findByTrackingNumber(
+                $request->tracking_number,
+                $request->nik
+            );
+        } elseif ($request->filled('tracking_number')) {
+            $suratKuasa = SuratKuasa::where('tracking_number', $request->tracking_number)->first();
+        } elseif ($request->filled('id')) {
+            $suratKuasa = SuratKuasa::find($request->id);
+        } else {
+            return view('surat-kuasa.track-form'); // tampilkan form kalau kosong
+        }
+
+        if (!$suratKuasa) {
+            return back()->withErrors(['error' => 'Data tidak ditemukan.']);
+        }
+
+        return view('surat-kuasa.track', compact('suratKuasa'));
     }
+
+
+    // public function showTrackForm(Request $request)
+    // {
+    //     // Cek apakah ada parameter tracking_number dan nik di query string
+    //     if ($request->has(['tracking_number', 'nik'])) {
+    //         $suratKuasa = SuratKuasa::findByTrackingNumber(
+    //             $request->tracking_number,
+    //             $request->nik
+    //         );
+
+    //         if (!$suratKuasa) {
+    //             return back()->withErrors(['error' => 'Data tidak ditemukan. Periksa kembali nomor tracking dan NIK Anda.']);
+    //         }
+
+    //         return view('surat-kuasa.track', compact('suratKuasa'));
+    //     }
+
+    //     // Kalau tidak ada parameter, tampilkan form
+    //     return view('surat-kuasa.track-form');
+    // }
+    // public function track(Request $request)
+    // {
+    //     $request->validate([
+    //         'id' => 'required|string',
+    //         'nik' => 'required|string|size:16'
+    //     ]);
+
+    //     $suratKuasa = SuratKuasa::where('id', $request->id)
+    //         ->where('nik_pemberi', $request->nik)
+    //         ->first();
+
+    //     if (!$suratKuasa) {
+    //         return back()->withErrors(['error' => 'Data tidak ditemukan. Periksa kembali ID dan NIK Anda.']);
+    //     }
+
+    //     return view('surat-kuasa.track', compact('suratKuasa'));
+    // }
+
+    // // public function showTrackForm()
+    // // {
+    // //     return view('surat-kuasa.track-form');
+    // // }
+    // public function showTrackForm(Request $request)
+    // {
+    //     // Cek apakah ada parameter id dan nik di query string
+    //     if ($request->has(['id', 'nik'])) {
+    //         $suratKuasa = SuratKuasa::where('id', $request->id)
+    //             ->where('nik_pemberi', $request->nik)
+    //             ->first();
+
+    //         if (!$suratKuasa) {
+    //             return back()->withErrors(['error' => 'Data tidak ditemukan. Periksa kembali ID dan NIK Anda.']);
+    //         }
+
+    //         return view('surat-kuasa.track', compact('suratKuasa'));
+    //     }
+
+    //     // Kalau tidak ada parameter, tampilkan form
+    //     return view('surat-kuasa.track-form');
+    // }
 }

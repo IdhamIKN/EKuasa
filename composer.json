@@ -8,9 +8,11 @@
     "require": {
         "php": "^8.2",
         "barryvdh/laravel-dompdf": "^3.1",
+        "google/apiclient": "*",
         "intervention/image": "^3.11",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
+        "league/csv": "*",
         "milon/barcode": "^12.0",
         "opcodesio/log-viewer": "^3.19",
         "picqer/php-barcode-generator": "^3.2",

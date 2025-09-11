@@ -112,8 +112,7 @@ class AdminController extends Controller
             // Send WhatsApp notification
             $this->whatsappService->sendApprovedNotification($suratKuasa);
 
-            return redirect()->route('admin.dashboard')
-                ->with('success', 'Surat kuasa berhasil disetujui dan PDF telah digenerate!');
+            return redirect()->back()->with('success', 'Surat kuasa berhasil disetujui dan PDF telah digenerate!');
         } catch (\Exception $e) {
             return back()->withErrors(['error' => 'Terjadi kesalahan: ' . $e->getMessage()]);
         }
@@ -148,16 +147,15 @@ class AdminController extends Controller
             // Send WhatsApp notification
             $this->whatsappService->sendRejectedNotification($suratKuasa);
 
-            return redirect()->route('admin.dashboard')
-                ->with('success', 'Surat kuasa berhasil ditolak dan notifikasi telah dikirim!');
+            return redirect()->back()->with('success', 'Surat kuasa berhasil ditolak dan notifikasi telah dikirim!');
         } catch (\Exception $e) {
             return back()->withErrors(['error' => 'Terjadi kesalahan: ' . $e->getMessage()]);
         }
     }
 
+
     // public function generatePDF($id)
     // {
-    //     // Pastikan hanya admin yang bisa
     //     if ($redirect = $this->checkAdminRole()) {
     //         return $redirect;
     //     }
@@ -165,28 +163,56 @@ class AdminController extends Controller
     //     try {
     //         $suratKuasa = SuratKuasa::findOrFail($id);
 
+    //         // Format nama
+    //         $suratKuasa->nama_penerima = $this->shortenNameWithInitialsRobust($suratKuasa->nama_penerima);
+    //         $suratKuasa->nama_pemberi = $this->shortenNameWithInitialsRobust($suratKuasa->nama_pemberi);
+    //         // dd( $suratKuasa->nama_penerima, $suratKuasa->nama_pemberi);
+    //         // Data untuk QR code
+    //         $qrData = [
+    //             'id' => $suratKuasa->id,
+    //             'pemberi' => $suratKuasa->nama_pemberi,
+    //             'penerima' => $suratKuasa->nama_penerima,
+    //             'tanggal' => now()->format('Y-m-d'),
+    //             'hash' => substr(md5($suratKuasa->id . config('app.key')), 0, 12)
+    //         ];
+
+    //         $qrContent =
+    //             "ID: {$suratKuasa->id}\n" .
+    //             "Nomor Surat: {$suratKuasa->nomor_surat}\n" .
+    //             "Pemberi: {$suratKuasa->nama_pemberi}\n" .
+    //             "Penerima: {$suratKuasa->nama_penerima}\n" .
+    //             "Tanggal: " . now()->format('d F Y') . "\n" .
+    //             "Hash: {$qrData['hash']}";
+
+    //         $qrCode = QrCode::format('png')
+    //             ->size(300)
+    //             ->errorCorrection('H')
+    //             ->generate($qrContent);
+
+
+    //         $qrCodeBase64 = base64_encode($qrCode);
+
+    //         // Generate PDF dengan menyertakan QR code
     //         $pdfService = new PDFService();
-    //         $filePath = $pdfService->generateSuratKuasaPDF($suratKuasa);
+    //         $filePath = $pdfService->generateSuratKuasaPDF($suratKuasa, $qrCodeBase64);
 
     //         // Update status
-    //         $suratKuasa->update([
-    //             'status' => SuratKuasa::STATUS_DISETUJUI
-    //         ]);
+    //         $suratKuasa->update(['status' => SuratKuasa::STATUS_DISETUJUI]);
 
     //         return response()->json([
-    //             'success'      => true,
-    //             'message'      => 'PDF berhasil dibuat',
+    //             'success' => true,
+    //             'message' => 'PDF berhasil dibuat',
     //             'download_url' => route('admin.surat-kuasa.download', $id)
     //         ]);
     //     } catch (\Exception $e) {
     //         Log::error('PDF generation failed: ' . $e->getMessage());
-
     //         return response()->json([
     //             'success' => false,
     //             'message' => 'Gagal generate PDF: ' . $e->getMessage()
     //         ], 500);
     //     }
     // }
+
     public function generatePDF($id)
     {
         if ($redirect = $this->checkAdminRole()) {
@@ -196,47 +222,46 @@ class AdminController extends Controller
         try {
             $suratKuasa = SuratKuasa::findOrFail($id);
 
-            // Format nama
-            $suratKuasa->nama_penerima = $this->shortenNameWithInitialsRobust($suratKuasa->nama_penerima);
-            $suratKuasa->nama_pemberi = $this->shortenNameWithInitialsRobust($suratKuasa->nama_pemberi);
-            // dd( $suratKuasa->nama_penerima, $suratKuasa->nama_pemberi);
-            // Data untuk QR code
-            $qrData = [
-                'id' => $suratKuasa->id,
-                'pemberi' => $suratKuasa->nama_pemberi,
-                'penerima' => $suratKuasa->nama_penerima,
-                'tanggal' => now()->format('Y-m-d'),
-                'hash' => substr(md5($suratKuasa->id . config('app.key')), 0, 12)
-            ];
+            // Format nama penerima & pemberi (pakai shortname untuk bagian bawah)
+            $namaPenerimaShort = $this->shortenNameWithInitialsRobust($suratKuasa->nama_penerima);
+            $namaPemberiShort  = $this->shortenNameWithInitialsRobust($suratKuasa->nama_pemberi);
 
-            // Generate QR code
+            // Tanggal pembuatan
+            $tanggal_pembuatan = now()->locale('id')->translatedFormat('d F Y');
+
+            // Buat isi QR Code
+            $qrContent =
+                "ID Pengajuan: {$suratKuasa->id}\n" .
+                "Nama Pemberi: {$suratKuasa->nama_pemberi}\n" .
+                "Nama Penerima: {$suratKuasa->nama_penerima}\n" .
+                "Tanggal Pembuatan: {$tanggal_pembuatan}\n" .
+                "Verifikasi: " . url('/verify-surat/' . $suratKuasa->id);
+
             $qrCode = QrCode::format('png')
                 ->size(300)
+                ->margin(1)
                 ->errorCorrection('H')
-                ->generate(json_encode($qrData));
+                ->generate($qrContent);
 
             $qrCodeBase64 = base64_encode($qrCode);
 
-            // Generate PDF dengan menyertakan QR code
+            // Kirim ke PDFService, sekarang ada full name & short name
             $pdfService = new PDFService();
-            $filePath = $pdfService->generateSuratKuasaPDF($suratKuasa, $qrCodeBase64);
+            // $filePath = $pdfService->generateSuratKuasaPDF($suratKuasa, $qrCodeBase64);
+            $filePath = $pdfService->generateSuratKuasaPDF($suratKuasa, $namaPenerimaShort, $namaPemberiShort, $qrCodeBase64);
 
             // Update status
             $suratKuasa->update(['status' => SuratKuasa::STATUS_DISETUJUI]);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'PDF berhasil dibuat',
-                'download_url' => route('admin.surat-kuasa.download', $id)
-            ]);
+            return redirect()->back()->with('success', 'PDF berhasil dibuat.');
         } catch (\Exception $e) {
             Log::error('PDF generation failed: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal generate PDF: ' . $e->getMessage()
-            ], 500);
+            return redirect()->back()->with('error', 'Gagal generate PDF: ' . $e->getMessage());
         }
     }
+
+
+
     private function shortenNameWithInitialsRobust($name)
     {
         // Validasi input
@@ -247,7 +272,7 @@ class AdminController extends Controller
         $name = trim(preg_replace('/\s+/', ' ', $name)); // Normalize multiple spaces
 
         // Jika nama tidak lebih dari 20 karakter, return as is
-        if (strlen($name) <= 20) {
+        if (strlen($name) <= 15) {
             return $name;
         }
 

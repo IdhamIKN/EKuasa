@@ -10,10 +10,9 @@ use Carbon\Carbon;
 class SuratKuasa extends Model
 {
     use HasUuids;
-
     protected $table = 'surat_kuasa';
-
     protected $fillable = [
+        'tracking_number', // Tambahkan field baru
         'nik_pemberi',
         'tanggal_pengajuan',
         'kota_pengajuan',
@@ -42,6 +41,48 @@ class SuratKuasa extends Model
     const STATUS_PENDING = 'pending';
     const STATUS_DISETUJUI = 'disetujui';
     const STATUS_DITOLAK = 'ditolak';
+
+    // Method untuk generate tracking number
+    public static function generateTrackingNumber()
+    {
+        $today = now();
+        $datePrefix = $today->format('dmY'); // Format: ddmmyyyy (misalkan hari ini 10092025)
+
+        // Generate 3 huruf acak
+        $letters = '';
+        for ($i = 0; $i < 3; $i++) {
+            $letters .= chr(rand(65, 90)); // A-Z
+        }
+
+        // Cari nomor urut terakhir hari ini
+        $lastNumber = self::whereDate('created_at', $today->toDateString())
+            ->whereNotNull('tracking_number')
+            ->orderBy('id', 'desc')
+            ->first();
+
+        if ($lastNumber && $lastNumber->tracking_number) {
+            // Ambil 4 digit terakhir dari tracking number
+            $lastSequence = (int) substr($lastNumber->tracking_number, -4);
+            $nextSequence = $lastSequence + 1;
+        } else {
+            $nextSequence = 1;
+        }
+
+        // Format: ABC10092025001
+        return $letters . $datePrefix . str_pad($nextSequence, 4, '0', STR_PAD_LEFT);
+    }
+
+    // Method untuk mencari berdasarkan tracking number
+    public static function findByTrackingNumber($trackingNumber, $nik = null)
+    {
+        $query = self::where('tracking_number', strtoupper($trackingNumber));
+
+        if ($nik) {
+            $query->where('nik_pemberi', $nik);
+        }
+
+        return $query->first();
+    }
 
     public function getStatusLabelAttribute()
     {

@@ -35,8 +35,27 @@
                     <small class="text-muted">Kelola pengajuan surat kuasa</small>
                 </div>
                 <div>
-                    <span class="text-muted">{{ now()->format('d F Y, H:i') }}</span>
+                    <span id="waktu" class="text-muted"></span>
                 </div>
+                <script>
+                    function updateTime() {
+                        const now = new Date();
+                        const options = {
+                            hour: '2-digit'
+                            , minute: '2-digit'
+                            , second: '2-digit'
+                            , day: '2-digit'
+                            , month: 'long'
+                            , year: 'numeric'
+
+                        };
+                        document.getElementById('waktu').textContent = now.toLocaleString('id-ID', options);
+                    }
+
+                    setInterval(updateTime, 1000); // update tiap 1 detik
+                    updateTime(); // panggil langsung saat pertama load
+
+                </script>
             </div>
 
             <!-- Alert Messages -->
@@ -59,63 +78,63 @@
             </div>
             @endif
 
-<div class="row mb-4 g-3">
-    <div class="col-12 col-sm-6 col-lg-3">
-        <div class="card bg-primary text-white h-100">
-            <div class="card-body d-flex align-items-center">
-                <div class="flex-grow-1">
-                    <h3 class="mb-0">{{ $stats['total'] }}</h3>
-                    <p class="mb-0">Total Pengajuan</p>
+            <div class="row mb-4 g-3">
+                <div class="col-12 col-sm-6 col-lg-3">
+                    <div class="card bg-primary text-white h-100">
+                        <div class="card-body d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <h3 class="mb-0">{{ $stats['total'] }}</h3>
+                                <p class="mb-0">Total Pengajuan</p>
+                            </div>
+                            <div class="fs-1">
+                                <i class="fas fa-file-contract"></i>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="fs-1">
-                    <i class="fas fa-file-contract"></i>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <div class="col-12 col-sm-6 col-lg-3">
-        <div class="card bg-warning text-white h-100">
-            <div class="card-body d-flex align-items-center">
-                <div class="flex-grow-1">
-                    <h3 class="mb-0">{{ $stats['pending'] }}</h3>
-                    <p class="mb-0">Menunggu Verifikasi</p>
+                <div class="col-12 col-sm-6 col-lg-3">
+                    <div class="card bg-warning text-white h-100">
+                        <div class="card-body d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <h3 class="mb-0">{{ $stats['pending'] }}</h3>
+                                <p class="mb-0">Menunggu Verifikasi</p>
+                            </div>
+                            <div class="fs-1">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="fs-1">
-                    <i class="fas fa-clock"></i>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <div class="col-12 col-sm-6 col-lg-3">
-        <div class="card bg-success text-white h-100">
-            <div class="card-body d-flex align-items-center">
-                <div class="flex-grow-1">
-                    <h3 class="mb-0">{{ $stats['disetujui'] }}</h3>
-                    <p class="mb-0">Disetujui</p>
+                <div class="col-12 col-sm-6 col-lg-3">
+                    <div class="card bg-success text-white h-100">
+                        <div class="card-body d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <h3 class="mb-0">{{ $stats['disetujui'] }}</h3>
+                                <p class="mb-0">Disetujui</p>
+                            </div>
+                            <div class="fs-1">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="fs-1">
-                    <i class="fas fa-check-circle"></i>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <div class="col-12 col-sm-6 col-lg-3">
-        <div class="card bg-danger text-white h-100">
-            <div class="card-body d-flex align-items-center">
-                <div class="flex-grow-1">
-                    <h3 class="mb-0">{{ $stats['ditolak'] }}</h3>
-                    <p class="mb-0">Ditolak</p>
-                </div>
-                <div class="fs-1">
-                    <i class="fas fa-times-circle"></i>
+                <div class="col-12 col-sm-6 col-lg-3">
+                    <div class="card bg-danger text-white h-100">
+                        <div class="card-body d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <h3 class="mb-0">{{ $stats['ditolak'] }}</h3>
+                                <p class="mb-0">Ditolak</p>
+                            </div>
+                            <div class="fs-1">
+                                <i class="fas fa-times-circle"></i>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
 
 
             <!-- Filters -->
@@ -244,7 +263,7 @@
                         Setelah disetujui, sistem akan otomatis:
                         <ul class="mb-0 mt-2">
                             <li>Generate PDF surat kuasa dengan barcode</li>
-                            <li>Mengirim notifikasi WhatsApp beserta link download</li>
+                            {{-- <li>Mengirim notifikasi WhatsApp beserta link download</li> --}}
                         </ul>
                     </div>
                 </div>
@@ -281,9 +300,13 @@
                             <label for="alasan_penolakan" class="form-label">Alasan Penolakan <span class="text-danger">*</span></label>
                             <textarea class="form-control" id="alasan_penolakan" name="alasan_penolakan" rows="4" placeholder="Contoh: Foto KTP tidak jelas, data tidak lengkap, dll." required></textarea>
                         </div>
-                        <div class="alert alert-warning">
+                        {{-- <div class="alert alert-warning">
                             <i class="fas fa-exclamation-triangle me-2"></i>
                             Alasan penolakan akan dikirimkan ke pemohon melalui WhatsApp
+                        </div> --}}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Alasan penolakan akan dikirimkan ke pemohon
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -335,11 +358,11 @@
         }
 
         // Auto refresh every 30 seconds for pending status
-        setInterval(function() {
-            if (window.location.search.includes('status=pending') || window.location.search === '') {
-                window.location.reload();
-            }
-        }, 30000);
+        // setInterval(function() {
+        // if (window.location.search.includes('status=pending') || window.location.search === '') {
+        // window.location.reload();
+        // }
+        // }, 30000);
 
     </script>
     @endpush

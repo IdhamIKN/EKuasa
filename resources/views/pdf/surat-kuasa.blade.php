@@ -216,7 +216,7 @@
             <tr>
                 <td class="label">Nama lengkap</td>
                 <td class="sep">:</td>
-                <td class="value"><span class="field-block uppercase">{{ $surat_kuasa->nama_pemberi }}</span></td>
+                <td class="value"><span class="field-block uppercase">{{ $surat_kuasa->nama_pemberi  }}</span></td>
             </tr>
             <tr>
                 <td class="label">Tempat &amp; Tanggal lahir/Usia</td>
@@ -242,7 +242,7 @@
             <tr>
                 <td class="label">Nama lengkap</td>
                 <td class="sep">:</td>
-                <td class="value"><span class="field-block uppercase">{{ $surat_kuasa->nama_penerima }}</span></td>
+                <td class="value"><span class="field-block uppercase">{{ $surat_kuasa->nama_penerima  }}</span></td>
             </tr>
             <tr>
                 <td class="label">NIK</td>
@@ -266,16 +266,16 @@
             <tr>
                 <td class="ttd-left ttd-sign">
                     <span class="paren">
-                        <span class="{{ strlen($surat_kuasa->nama_penerima) > 30 ? 'long-name' : '' }}">
-                            {{ $surat_kuasa->nama_penerima }}
+                        <span class="{{ strlen($nama_penerima_short) > 30 ? 'long-name' : '' }}">
+                            {{ $nama_penerima_short }}
                         </span>
                     </span>
                 </td>
                 <td class="ttd-center"></td>
                 <td class="ttd-right ttd-sign">
                     <span class="paren">
-                        <span class="{{ strlen($surat_kuasa->nama_pemberi) > 30 ? 'long-name' : '' }}">
-                            {{ $surat_kuasa->nama_pemberi }}
+                        <span class="{{ strlen($nama_pemberi_short) > 30 ? 'long-name' : '' }}">
+                            {{ $nama_pemberi_short }}
                         </span>
                     </span>
                 </td>
@@ -292,8 +292,6 @@
             </div>
             @endif
         </div>
-
-        <p class="footnote">*) coret yang tidak sesuai</p>
     </section>
 </body>
 </html>

@@ -13,6 +13,7 @@
                     <div class="text-center mb-4">
                         <i class="fas fa-file-contract fa-3x text-primary mb-3"></i>
                         <h2>Status Pengajuan Surat Kuasa</h2>
+                        <p class="text-muted">Nomor Tracking: <code>{{ session('tracking_number') ?? $suratKuasa->tracking_number }}</code></p>
                         <p class="text-muted">ID Pengajuan: <code>{{ $suratKuasa->id }}</code></p>
                     </div>
 
@@ -143,7 +144,8 @@
                                 <i class="fas fa-info-circle me-2"></i>
                                 Sedang Diproses
                             </h6>
-                            <p class="mb-0">Pengajuan Anda sedang dalam tahap verifikasi oleh admin. Mohon tunggu maksimal 1x24 jam. Anda akan mendapat notifikasi WhatsApp ketika status berubah.</p>
+                            {{-- <p class="mb-0">Pengajuan Anda sedang dalam tahap verifikasi oleh admin. Mohon tunggu maksimal 1x24 jam. Anda akan mendapat notifikasi WhatsApp ketika status berubah.</p> --}}
+                            <p class="mb-0">Pengajuan Anda sedang dalam tahap verifikasi oleh admin. Mohon tunggu maksimal 1x24 jam.</p>
                         </div>
                     @elseif($suratKuasa->status === 'disetujui')
                         <div class="alert alert-success mt-4">
@@ -161,7 +163,7 @@
                                     </a>
                                 </div>
                                 <p class="mb-0 mt-2 text-center">
-                                    <small>Link download juga telah dikirimkan melalui WhatsApp</small>
+                                    {{-- <small>Link download juga telah dikirimkan melalui WhatsApp</small> --}}
                                 </p>
                             @endif
                         </div>
