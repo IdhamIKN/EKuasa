@@ -26,7 +26,7 @@ Sistem pengajuan surat kuasa secara online dengan fitur verifikasi admin, notifi
 ### 1. Clone Repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/IdhamIKN/EKuasa.git
 cd surat-kuasa-online
 ```
 
