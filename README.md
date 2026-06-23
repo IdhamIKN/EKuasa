@@ -77,10 +77,10 @@ DB_PASSWORD=
 Tambahkan konfigurasi WhatsApp API di file `.env`:
 
 ```env
-WHATSAPP_API_URL=https://wa.itbmd.my.id/send-message
-WHATSAPP_API_KEY=u7pjIvzrpGx1ZPjRiHKr5wrAfp2LjU
+WHATSAPP_API_URL=https://.id/send-message
+WHATSAPP_API_KEY=
 SYSTEM_PHONE_NUMBER=6281234567890
-SYSTEM_LOCATION="Kediri"
+SYSTEM_LOCATION=""
 ```
 
 ### 7. Publish Package Configurations
